@@ -17,6 +17,13 @@ main()
     printf("xv6 kernel is booting\n");
     printf("\n");
     kinit();         // physical page allocator
+    uint64 pages = kfreepages();
+    uint64 mem_in_kb = pages * 4;
+    uint64 mem_in_mb = mem_in_kb / 1024;
+    uint64 mem_in_mb_dec = mem_in_kb - (mem_in_mb * 1024);
+    printf("free pyhsical pages: %d\n", pages);
+    printf("free pyhsical memory: %d KB\n", mem_in_kb);
+    printf("free pyhsical memory: %d MB and %d KB\n", mem_in_mb, mem_in_mb_dec);
     kvminit();       // create kernel page table
     kvminithart();   // turn on paging
     procinit();      // process table

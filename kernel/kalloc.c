@@ -39,6 +39,21 @@ freerange(void *pa_start, void *pa_end)
     kfree(p);
 }
 
+// Counts the number of free pages available
+uint64
+kfreepages() 
+{
+  struct run* current = kmem.freelist;
+  uint64 count = 0;
+  
+  while (current != 0) {
+    count++;
+    current = current->next;
+  }
+
+  return count;
+}
+
 // Free the page of physical memory pointed at by pa,
 // which normally should have been returned by a
 // call to kalloc().  (The exception is when
