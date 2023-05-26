@@ -681,3 +681,18 @@ procdump(void)
     printf("\n");
   }
 }
+
+uint64 ps(struct proc_info* pinfo)
+{
+  uint64 size = 0;
+  struct proc_info info[NPROC];
+  for (struct proc *p = proc; p < &proc[NPROC]; p++)
+    if (p->state != UNUSED) {
+      memmove(info[size].name, p->name, sizeof(p->name) / sizeof(p->name[0]));
+      info[size].pid = p->pid;
+      info[size++].state = p->state;
+    }
+  if (pinfo != 0)
+    copyout(myproc()->pagetable, (uint64)pinfo, (char*)info, sizeof(struct proc_info) * size);
+  return size;
+}

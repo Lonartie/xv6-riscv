@@ -105,3 +105,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 };
+
+struct proc_info {
+  enum procstate state;        // Process state
+  int pid;                     // Process ID
+  char name[16];               // Process name (debugging)
+};

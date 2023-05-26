@@ -135,6 +135,7 @@ UPROGS=\
 	$U/_hello\
 	$U/_sleep\
 	$U/_freepages\
+	$U/_ps\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

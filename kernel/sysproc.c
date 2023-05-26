@@ -95,3 +95,14 @@ sys_freepages(void)
 {
    return kfreepages();
 }
+
+extern uint64 ps(struct proc_info*);
+
+uint64
+sys_ps(void) 
+{
+   uint64 pinfo_addr;
+   argaddr(0, &pinfo_addr);
+   struct proc_info* pinfo = (struct proc_info*)(pinfo_addr);
+   return ps(pinfo);
+}
