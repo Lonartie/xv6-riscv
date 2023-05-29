@@ -44,7 +44,7 @@ uint64
 kfreepages() 
 {
   struct run* current = kmem.freelist;
-  uint64 count = 1;
+  uint64 count = 0;
   
   while (current != 0) {
     count++;
