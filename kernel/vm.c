@@ -437,3 +437,59 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+// Prints one entry line of a page table
+void vmprint_entry(int lvl, uint64 index, pte_t pte) {
+   uint64 pa = PTE2PA(pte);
+   char lvl_str[10] = {'\0'};
+   for (int i = 0; i <= 3 * lvl; i++) {
+      if (i % 3 != 0) {
+         lvl_str[i] = '.';
+      } else {
+         lvl_str[i] = ' ';
+      }
+   }
+   lvl_str[3 * lvl] = '\0';
+   printf("%s%d: pte %p pa %p\n", lvl_str, index, pte, pa);
+}
+
+// Prints the page table contents
+void vmprint(pagetable_t pt1) {
+   printf("page table %p\n", pt1);
+
+   // go through first level
+   for (int i = 0; i < 512; i++) {
+      pte_t pte1 = pt1[i];
+      uint64 child1 = PTE2PA(pte1);
+      pagetable_t pt2 = (pagetable_t) child1;
+
+      // check if valid and not a leaf
+      if ((pte1 & PTE_V) && (pte1 & (PTE_R|PTE_W|PTE_X)) == 0) {
+
+         vmprint_entry(1, i, pte1);
+
+         // go through second level
+         for (int j = 0; j < 512; j++) {
+            pte_t pte2 = pt2[j];
+            uint64 child2 = PTE2PA(pte2);
+            pagetable_t pt3 = (pagetable_t) child2;
+
+            // check if valid and not a leaf
+            if ((pte2 & PTE_V) && (pte2 & (PTE_R|PTE_W|PTE_X)) == 0) {
+
+               vmprint_entry(2, j, pte2);
+
+               // go through third level
+               for (int k = 0; k < 512; k++) {
+                  pte_t pte3 = pt3[k];
+
+                  // check if valid and a leaf
+                  if ((pte3 & PTE_V) && (pte3 & (PTE_R|PTE_W|PTE_X)) != 0) {
+                     vmprint_entry(3, k, pte3);
+                  }
+               }
+            }
+         }
+      }
+   }
+}
