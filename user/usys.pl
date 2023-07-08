@@ -38,3 +38,4 @@ entry("sleep");
 entry("uptime");
 entry("freepages");
 entry("ps");
+entry("setpriority");

@@ -104,10 +104,16 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // process priority
+  int prio;                    // ranges from 0 to 200, 100 is default
+  int runtime;                 // total time spent running
 };
 
 struct proc_info {
   enum procstate state;        // Process state
   int pid;                     // Process ID
   char name[16];               // Process name (debugging)
+  int prio;                    // ranges from 0 to 200, 100 is default
+  int runtime;                 // total time spent running
 };

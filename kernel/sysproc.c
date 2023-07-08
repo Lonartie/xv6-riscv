@@ -106,3 +106,13 @@ sys_ps(void)
    struct proc_info* pinfo = (struct proc_info*)(pinfo_addr);
    return ps(pinfo);
 }
+
+
+extern int setpriority(int);
+
+uint64 sys_setpriority(void) 
+{
+   int priority;
+   argint(0, &priority);
+   return setpriority(priority);
+}

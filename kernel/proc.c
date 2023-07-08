@@ -55,6 +55,8 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->state = UNUSED;
       p->kstack = KSTACK((int) (p - proc));
+      p->prio = 100;
+      p->runtime = 0;
   }
 }
 
@@ -377,6 +379,8 @@ exit(int status)
 
   p->xstate = status;
   p->state = ZOMBIE;
+  p->prio = 100; // reassign priority to default value
+  p->runtime = 0; // reset runtime
 
   release(&wait_lock);
 
@@ -446,21 +450,42 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
-  
+  uint64 cycles = 0;
+
   c->proc = 0;
-  for(;;){
+  for(;; cycles++){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for(p = proc; p < &proc[NPROC]; p++) {
+    int highest_prio = 0;
+    
+    for (p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
+      if (p->state == RUNNABLE && p->prio > highest_prio) {
+        highest_prio = p->prio;
+      }
+      release(&p->lock);
+    }
+
+    // periodically run all processes as round robin to avoid starvation
+    if (cycles % 3 == 0) {
+      highest_prio = 0;
+    }
+
+    for (p = proc; p < &proc[NPROC]; p++) {
+      // a process gets prio amount of time slots to run
+      acquire(&p->lock);
+      if (p->state == RUNNABLE && p->prio >= highest_prio) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+
+        uint ticks_start = ticks;
         swtch(&c->context, &p->context);
+        uint ticks_end = ticks;
+        p->runtime += (ticks_end - ticks_start);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -469,6 +494,19 @@ scheduler(void)
       release(&p->lock);
     }
   }
+}
+
+// Sets the currents process priority to the given value
+int
+setpriority(int priority) {
+  if (priority < 0 || priority > 200) {
+    return -1;
+  }
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  p->prio = priority;
+  release(&p->lock);
+  return 0;
 }
 
 // Switch to scheduler.  Must hold only p->lock
@@ -690,6 +728,8 @@ uint64 ps(struct proc_info* pinfo)
     if (p->state != UNUSED) {
       memmove(info[size].name, p->name, sizeof(p->name) / sizeof(p->name[0]));
       info[size].pid = p->pid;
+      info[size].prio = p->prio;
+      info[size].runtime = p->runtime;
       info[size++].state = p->state;
     }
   if (pinfo != 0)
