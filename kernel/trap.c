@@ -67,6 +67,20 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
+  } else if (r_scause() == 13 || r_scause() == 15) {
+    // lazy memory allocation
+    uint64 va = r_stval();
+    uint64 pa = (uint64)kalloc();
+    if (pa == 0) {
+      printf("usertrap(): out of memory\n");
+      setkilled(p);
+    }
+    memset((void*)pa, 0, PGSIZE);
+    if (mappages(p->pagetable, PGROUNDDOWN(va), PGSIZE, pa, PTE_V | PTE_W | PTE_X | PTE_R | PTE_U) != 0) {
+      printf("usertrap(): mappages failed\n");
+      kfree((void*)pa);
+      setkilled(p);
+    }
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
